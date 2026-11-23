@@ -98,12 +98,22 @@ a:focus-visible,button:focus-visible{outline:3px solid #0993d3;outline-offset:4p
 .project-card:hover img{transform:scale(1.03)}
 .project-card h3{margin-top:.35rem}
 .project-card p{max-width:50ch}
-.about-layout{display:grid;grid-template-columns:.88fr 1.12fr;gap:clamp(2rem,6.5vw,7rem);align-items:center}
-.about-home h2{margin-bottom:1.35rem}
-.about-home p{color:var(--muted);margin-bottom:.7rem;max-width:48ch}
+.about-layout{display:grid;grid-template-columns:.88fr 1.12fr;gap:clamp(2rem,6.5vw,7rem);align-items:start}
+.about-home h2{max-width:14ch}
+.about-copy p{color:var(--muted);margin-bottom:.7rem;max-width:62ch}
 .about-home .line-link{margin-top:.65rem}
-.team-picture img{aspect-ratio:1.7;object-fit:cover;width:100%}
-.team-picture figcaption{font-size:.81rem;color:#53636c;margin-top:.45rem}
+.team{margin-top:clamp(2rem,4.5vw,4.5rem);border-top:1px solid var(--rule);padding-top:1.3rem}
+.team h3{margin:0 0 1rem;font:670 clamp(1.95rem,3vw,2.75rem)/1.05 var(--display);letter-spacing:-.035em}
+.team-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:1.65rem clamp(.85rem,2vw,1.8rem)}
+.team-profile img{display:block;width:100%;height:auto;aspect-ratio:4/5;background:var(--pale)}
+.team-profile figcaption{padding-top:.8rem}
+.team-profile h4{font:655 clamp(1.25rem,1.8vw,1.65rem)/1.1 var(--display);letter-spacing:-.022em;margin:0 0 .4rem}
+.team-profile sup{font-size:.65em;color:var(--blue);line-height:0}
+.team-profile p{font-size:.96rem;line-height:1.4;color:var(--ink)}
+.team-profile .team-specialty,.team-note{color:var(--muted);font-size:.86rem;line-height:1.45}
+.team-profile .team-specialty{margin-top:.35rem}
+.team-note{margin-top:1.15rem}
+@media(max-width:900px){.team-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
 .contact-section{background:#102f43;color:white;padding-block:clamp(2.6rem,5vw,5rem)}
 .contact-layout{display:grid;grid-template-columns:1.2fr .8fr;align-items:center;gap:2rem}
 .contact-section .section-label{color:#b4d3e2}
