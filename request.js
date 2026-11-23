@@ -2,7 +2,6 @@
   'use strict';
 
   const recipient = 'info@rggroup.by';
-  const subject = 'Проект на расчёт — РГ Групп';
   const maxFileSize = 8 * 1024 * 1024;
   let dialog;
   let trigger;
@@ -50,7 +49,7 @@
     return ['Content-Disposition: attachment', ...filenameParams, ' filename="' + fallback.slice(0, 64) + '"'].join(';\r\n');
   }
 
-  function draftFile(file, bytes, message) {
+  function draftFile(file, bytes, message, subject) {
     const nonce = Array.from(crypto.getRandomValues(new Uint32Array(4)), n => n.toString(16)).join('');
     const boundary = 'rg_project_' + nonce;
     const type = /^[a-z0-9+.-]+\/[a-z0-9+.-]+$/i.test(file.type) ? file.type : 'application/octet-stream';
@@ -74,20 +73,20 @@
     el.innerHTML = `
       <div class="rg-request__inner">
         <button class="rg-request__close" type="button" aria-label="Закрыть окно"><span aria-hidden="true">×</span></button>
-        <h2 id="rg-request-title" tabindex="-1" autofocus>Отправить проект инженеру</h2>
-        <p class="rg-request__intro">Опишите объект и задачу. Письмо будет адресовано <a href="mailto:info@rggroup.by">info@rggroup.by</a>.</p>
+        <h2 id="rg-request-title" tabindex="-1" autofocus></h2>
+        <p class="rg-request__intro">Приложите проект или укажите ссылку на документацию. Срок первого ответа инженера — от нескольких дней до недели, в зависимости от объёма проекта.</p>
         <form class="rg-request__form">
-          <label class="rg-request__label" for="rg-task">Что нужно рассчитать?</label>
-          <textarea id="rg-task" rows="3" maxlength="1800" required placeholder="Например, вентиляцию склада в Минске. Площадь — 1 200 м²."></textarea>
+          <label class="rg-request__label" for="rg-task">Ссылка на проект или комментарий</label>
+          <textarea id="rg-task" rows="2" maxlength="1800" required></textarea>
           <label class="rg-request__label" for="rg-reply">Ваш контакт <span>по желанию</span></label>
           <input id="rg-reply" type="text" maxlength="180" placeholder="Имя, телефон или электронная почта">
-          <label class="rg-request__label" for="rg-file">Файл проекта <span>по желанию, до 8 МБ</span></label>
+          <label class="rg-request__label" for="rg-file">Файл проекта <span>до 8 МБ, для больших файлов укажите ссылку</span></label>
           <div class="rg-request__file-row">
             <input id="rg-file" type="file" aria-describedby="rg-file-error">
             <button class="rg-request__text" type="button" data-clear-file hidden>Убрать</button>
           </div>
           <p class="rg-request__error" id="rg-file-error" role="alert" hidden></p>
-          <p class="rg-request__hint" data-hint></p>
+          <p class="rg-request__hint">Получатель — <a href="mailto:info@rggroup.by">info@rggroup.by</a>. <span data-hint></span></p>
           <div class="rg-request__actions">
             <button class="rg-request__primary" type="submit">Открыть в почте</button>
             <button class="rg-request__text" type="button" data-copy>Скопировать заявку</button>
@@ -111,6 +110,8 @@
     function updateFile() {
       const file = fileInput.files[0];
       const tooLarge = !!file && file.size > maxFileSize;
+      task.required = !file;
+      task.setCustomValidity('');
       error.hidden = !tooLarge;
       error.textContent = tooLarge ? 'Файл больше 8 МБ. Выберите меньший файл или добавьте ссылку на него в описание.' : '';
       fileInput.setCustomValidity(error.textContent);
@@ -125,13 +126,13 @@
     }
 
     function message() {
-      const paragraphs = ['Здравствуйте!', task.value.trim()];
+      const paragraphs = ['Здравствуйте!', task.value.trim() || 'Направляю проект во вложении.'];
       if (contact.value.trim()) paragraphs.push('Для связи: ' + contact.value.trim());
       return paragraphs.join('\n\n');
     }
 
     function validTask() {
-      task.setCustomValidity(task.value.trim() ? '' : 'Опишите задачу.');
+      task.setCustomValidity(task.value.trim() || fileInput.files.length ? '' : 'Приложите файл проекта, укажите ссылку или опишите задачу.');
       return task.reportValidity();
     }
 
@@ -140,6 +141,7 @@
       if (!validTask() || !form.reportValidity()) return;
       const file = fileInput.files[0];
       const text = message();
+      const subject = el.querySelector('#rg-request-title').textContent + ' — РГ Групп';
       if (!file) {
         window.location.href = 'mailto:' + recipient + '?subject=' + encodeURIComponent(subject) + '&body=' + encodeURIComponent(text);
         return;
@@ -147,7 +149,7 @@
       primary.disabled = true;
       try {
         const bytes = new Uint8Array(await file.arrayBuffer());
-        const url = URL.createObjectURL(draftFile(file, bytes, text));
+        const url = URL.createObjectURL(draftFile(file, bytes, text, subject));
         const save = document.createElement('a');
         save.href = url;
         save.download = 'RG-Group-project.eml';
@@ -172,6 +174,7 @@
     el.querySelector('[data-copy]').addEventListener('click', async () => {
       if (!validTask()) return;
       const file = fileInput.files[0];
+      const subject = el.querySelector('#rg-request-title').textContent + ' — РГ Групп';
       const text = 'Кому: ' + recipient + '\nТема: ' + subject + '\n\n' + message() +
         (file ? '\n\nВложение: ' + file.name : '');
       try {
@@ -211,6 +214,9 @@
     event.preventDefault();
     trigger = link;
     if (!dialog.open) {
+      const tender = link.dataset.request === 'tender';
+      dialog.querySelector('#rg-request-title').textContent = tender ? 'Приглашение к участию в торгах' : 'Проект на расчёт';
+      dialog.querySelector('#rg-task').placeholder = tender ? 'Ссылка на закупку, номер процедуры или срок подачи предложения' : 'Ссылка на документацию или коротко об объекте и составе работ';
       dialog.showModal();
       document.documentElement.classList.add('rg-request-open');
       dialog.querySelector('#rg-request-title').focus({ preventScroll: true });
